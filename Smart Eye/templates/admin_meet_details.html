@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Meet Details | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Meet Details</li>
+      </ol>
+    </nav>
+    <h2 class="mb-1 fw-bold">{{ meet_title }}</h2>
+    <p class="text-muted mb-0">
+      <span class="badge bg-light text-dark border">{{ meet_time_range|format_meet_time_range }}</span>
+    </p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-soft-secondary shadow-sm">
+      ← Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Students Table -->
+{% if rows %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Student Sessions</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Student</th>
+            <th>Login Time (IST)</th>
+            <th>Status</th>
+            <th>Duration</th>
+            <th>Engagement</th>
+            <th>Disengagement</th>
+            <th>Transitions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          {% set stats = row.stats %}
+          {% set session = row.session %}
+          <tr>
+            <td>
+              <strong>{{ row.student.username }}</strong>
+              <br>
+              <small class="text-muted">{{ row.student.email }}</small>
+            </td>
+            <td>
+              <small>{{ session.login_time|ist }}</small>
+            </td>
+            <td>
+              {% if session.logout_time %}
+                <span class="badge bg-secondary">Completed</span>
+              {% else %}
+                <span class="badge bg-success">Active</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge bg-secondary">{{ "%.1f"|format(row.duration_min) }} min</span>
+            </td>
+            <td>
+              {% if row.engagement_pct >= 80 %}
+                <span class="badge bg-success">✓ {{ "%.0f"|format(row.engagement_pct) }}%</span>
+              {% elif row.engagement_pct >= 50 %}
+                <span class="badge bg-warning">⚠ {{ "%.0f"|format(row.engagement_pct) }}%</span>
+              {% else %}
+                <span class="badge bg-danger">✖ {{ "%.0f"|format(row.engagement_pct) }}%</span>
+              {% endif %}
+              <br />
+              <small class="text-muted">{{ "%.1f"|format(row.engaged_min) }} min</small>
+            </td>
+            <td>
+              <span class="badge bg-danger">✖ {{ "%.0f"|format(100 - row.engagement_pct) }}%</span>
+              <br />
+              <small class="text-muted">{{ "%.1f"|format(row.disengaged_min) }} min</small>
+            </td>
+            <td>
+              <span class="badge bg-info">{{ stats.disengage_events }}</span>
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <a
+                  href="{{ url_for('admin_session_detail', session_id=session.id) }}"
+                  class="btn btn-soft-primary"
+                  title="View Details"
+                >
+                  👁️ View
+                </a>
+                <button
+                  type="button"
+                  class="btn btn-soft-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
+                  data-session-id="{{ session.id }}"
+                  data-student-name="{{ row.student.username }}"
+                  title="Delete Session"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Single Delete Confirmation Modal -->
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">
+          Confirm Deletion
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete this session for
+          <strong id="modalStudentName"></strong>?
+        </p>
+        <p class="text-muted small">
+          This will permanently delete the session and all its engagement events.
+          This action cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form
+          id="deleteForm"
+          method="POST"
+          action=""
+          style="display: inline;"
+        >
+          <button type="submit" class="btn btn-danger">Delete Session</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  <strong>No sessions found</strong> for this meet.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Handle Delete Modal
+  const deleteModal = document.getElementById('deleteModal');
+  if (deleteModal) {
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+      // Button that triggered the modal
+      const button = event.relatedTarget;
+      // Extract info from data-* attributes
+      const sessionId = button.getAttribute('data-session-id');
+      const studentName = button.getAttribute('data-student-name');
+      
+      // Update the modal's content.
+      const modalStudentName = deleteModal.querySelector('#modalStudentName');
+      const deleteForm = deleteModal.querySelector('#deleteForm');
+      
+      modalStudentName.textContent = studentName;
+      
+      // Construct the action URL dynamically
+      // We use a dummy ID '0' to get the base structure, then replace it
+      // Note: This assumes the route is /admin/delete-session/<id>
+      const baseUrl = "{{ url_for('admin_delete_session', session_id=0) }}";
+      deleteForm.action = baseUrl.replace('/0', '/' + sessionId);
+    });
+  }
+</script>
+{% endblock %}

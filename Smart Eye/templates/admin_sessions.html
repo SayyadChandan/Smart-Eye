@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}All Sessions | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <h2 class="mb-1 fw-bold">All Sessions</h2>
+    <p class="text-muted mb-0">Full session history with meet/class details and export.</p>
+  </div>
+  <div class="col-md-4 d-flex justify-content-md-end justify-content-center mt-3 mt-md-0">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-soft-secondary shadow-sm">
+      ← Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Filters</h5>
+    <form method="GET" action="{{ url_for('admin_sessions') }}" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small text-muted" for="meet_app">Meet App</label>
+        <select class="form-select" id="meet_app" name="meet_app">
+          <option value="" {% if not meet_app %}selected{% endif %}>All</option>
+          {% for opt in ["Zoom", "Teams", "Google Meet", "Others"] %}
+            <option value="{{ opt }}" {% if meet_app == opt %}selected{% endif %}>{{ opt }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small text-muted" for="meet_title">Meet Title</label>
+        <input
+          type="text"
+          class="form-control"
+          id="meet_title"
+          name="meet_title"
+          value="{{ request.args.get('meet_title', '') }}"
+          placeholder="Search title..."
+        />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small text-muted" for="meet_time_range">Time Range</label>
+        <input
+          type="text"
+          class="form-control"
+          id="meet_time_range"
+          name="meet_time_range"
+          value="{{ request.args.get('meet_time_range', '') }}"
+          placeholder="e.g. 10:00"
+        />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small text-muted" for="start_date">Start Date</label>
+        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small text-muted" for="end_date">End Date</label>
+        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date_str }}" />
+      </div>
+
+      <div class="col-12 d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+        <a href="{{ url_for('admin_sessions') }}" class="btn btn-soft-secondary btn-sm shadow-sm">Reset</a>
+
+        <a
+          href="{{ url_for('admin_sessions_export_csv', meet_app=meet_app, meet_title=meet_title, start_date=start_date_str, end_date=end_date_str) }}"
+          class="btn btn-outline-success btn-sm ms-md-auto"
+          title="Downloads CSV for the current filters"
+        >
+          ⬇ Download CSV for this meet
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if rows %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Session History</h5>
+
+    <!-- Mobile (iOS/Android): card list layout for readability -->
+    <div class="d-md-none">
+      <div class="session-cards">
+        {% for row in rows %}
+          {% set sess = row.session %}
+          {% set stats = row.stats %}
+          {% if stats.duration_seconds and stats.duration_seconds > 0 %}
+            {% set engaged_pct = 100.0 * stats.engaged_seconds / stats.duration_seconds %}
+            {% set disengaged_pct = 100.0 * stats.disengaged_seconds / stats.duration_seconds %}
+          {% else %}
+            {% set engaged_pct = 0.0 %}
+            {% set disengaged_pct = 0.0 %}
+          {% endif %}
+          <div class="card session-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div class="min-w-0">
+                  <div class="fw-bold">
+                    {{ row.student.username }}
+                    {% if sess.logout_time is none %}
+                      <span class="badge bg-success ms-2">Active</span>
+                    {% endif %}
+                  </div>
+                  <div class="text-muted small">
+                    {{ sess.meet_app or "-" }} • {{ sess.meet_title or "-" }}
+                    {% if sess.meet_time_range %}
+                      <br><span class="text-info">{{ sess.meet_time_range }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <a
+                  href="{{ url_for('admin_session_detail', session_id=sess.id) }}"
+                  class="btn btn-sm btn-outline-primary flex-shrink-0"
+                >
+                  View
+                </a>
+                <a
+                  href="{{ url_for('api_session_export', session_id=sess.id) }}"
+                  class="btn btn-sm btn-outline-success flex-shrink-0"
+                  title="Download engagement report (CSV)"
+                >
+                  ⬇ Report
+                </a>
+              </div>
+
+              <hr class="my-3" />
+
+              <div class="row g-2 small">
+                <div class="col-6">
+                  <div class="text-muted">Login (IST)</div>
+                  <div>{{ sess.login_time|ist }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Logout (IST)</div>
+                  <div>
+                    {% if sess.logout_time %}
+                      {{ sess.logout_time|ist }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Duration</div>
+                  <div>{{ "%.1f"|format((stats.duration_seconds or 0) / 60.0) }} min</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Engagement</div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge bg-success">{{ "%.0f"|format(engaged_pct) }}%</span>
+                    <span class="badge bg-danger">{{ "%.0f"|format(disengaged_pct) }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Desktop/tablet: keep the data table -->
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Student</th>
+            <th>Meet App</th>
+            <th>Meet Title</th>
+            <th>Time Range</th>
+            <th>Login (IST)</th>
+            <th>Logout (IST)</th>
+            <th>Duration</th>
+            <th>Engaged %</th>
+            <th>Disengaged %</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            {% set sess = row.session %}
+            {% set stats = row.stats %}
+            <tr>
+              <td><strong>{{ row.student.username }}</strong></td>
+              <td>{{ sess.meet_app or "-" }}</td>
+              <td>{{ sess.meet_title or "-" }}</td>
+              <td><small class="text-muted">{{ sess.meet_time_range or "-" }}</small></td>
+              <td><small>{{ sess.login_time|ist }}</small></td>
+              <td>
+                {% if sess.logout_time %}
+                  <small>{{ sess.logout_time|ist }}</small>
+                {% else %}
+                  <span class="badge bg-success">✓ Active</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-secondary">
+                  {{ "%.1f"|format((stats.duration_seconds or 0) / 60.0) }} min
+                </span>
+              </td>
+              <td>
+                {% if stats.duration_seconds and stats.duration_seconds > 0 %}
+                  {% set engaged_pct = 100.0 * stats.engaged_seconds / stats.duration_seconds %}
+                  <span class="badge bg-success">{{ "%.0f"|format(engaged_pct) }}%</span>
+                {% else %}
+                  <span class="badge bg-secondary">0%</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if stats.duration_seconds and stats.duration_seconds > 0 %}
+                  {% set disengaged_pct = 100.0 * stats.disengaged_seconds / stats.duration_seconds %}
+                  <span class="badge bg-danger">{{ "%.0f"|format(disengaged_pct) }}%</span>
+                {% else %}
+                  <span class="badge bg-secondary">0%</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('admin_session_detail', session_id=sess.id) }}" class="btn btn-sm btn-outline-primary">
+                  👁️ View
+                </a>
+                <a
+                  href="{{ url_for('api_session_export', session_id=sess.id) }}"
+                  class="btn btn-sm btn-outline-success ms-1"
+                  title="Download engagement report (CSV)"
+                >
+                  ⬇ Download
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  <strong>No sessions found</strong> for the selected filters.
+</div>
+{% endif %}
+
+{% endblock %}

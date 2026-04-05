@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Session Details | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_teaching_sessions') }}">Sessions</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Details</li>
+      </ol>
+    </nav>
+    <h2 class="mb-1 fw-bold">{{ teaching_session.meet_title }}</h2>
+    <p class="text-muted mb-0">
+      <span class="badge bg-primary me-2">{{ teaching_session.session_code }}</span>
+      <span class="badge bg-light text-dark border">
+        {{ teaching_session.date.strftime('%d-%m-%Y') }} | 
+        {{ teaching_session.start_time.strftime('%H:%M') }} - {{ teaching_session.end_time.strftime('%H:%M') }}
+      </span>
+    </p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{{ url_for('admin_teaching_sessions') }}" class="btn btn-outline-secondary">
+      ← Back to Sessions
+    </a>
+  </div>
+</div>
+
+<!-- Students Table -->
+{% if rows %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Student Participation</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Student</th>
+            <th>Login Time (IST)</th>
+            <th>Status</th>
+            <th>Duration</th>
+            <th>Engagement</th>
+            <th>Disengagement</th>
+            <th>Transitions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          {% set stats = row.stats %}
+          {% set session = row.session %}
+          <tr>
+            <td>
+              <div class="fw-bold">{{ row.student.username }}</div>
+            </td>
+            <td>
+              {{ session.login_time|ist }}
+            </td>
+            <td>
+              {% if session.logout_time %}
+                <span class="badge bg-success">Completed</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">Active/Incomplete</span>
+              {% endif %}
+            </td>
+            <td>
+              {{ "%.1f"|format(row.duration_min) }} min
+            </td>
+            <td>
+              {% if row.engagement_pct >= 80 %}
+                <span class="text-success fw-bold">{{ "%.1f"|format(row.engagement_pct) }}%</span>
+              {% elif row.engagement_pct >= 50 %}
+                <span class="text-warning fw-bold">{{ "%.1f"|format(row.engagement_pct) }}%</span>
+              {% else %}
+                <span class="text-danger fw-bold">{{ "%.1f"|format(row.engagement_pct) }}%</span>
+              {% endif %}
+              <br>
+              <small class="text-muted">{{ "%.1f"|format(row.engaged_min) }} min</small>
+            </td>
+            <td>
+              <span class="text-muted">{{ "%.1f"|format(row.disengaged_min) }} min</span>
+            </td>
+            <td>
+              {{ stats.disengage_events }}
+            </td>
+            <td>
+              <a href="{{ url_for('admin_session_detail', session_id=session.id) }}" class="btn btn-sm btn-outline-primary">
+                Timeline
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  <strong>No student sessions found</strong> for this class yet. Share the code <strong>{{ teaching_session.session_code }}</strong> with your students!
+</div>
+{% endif %}
+{% endblock %}

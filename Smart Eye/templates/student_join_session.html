@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Join Session | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+  <div class="col-md-6 col-lg-5">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">Join a Class Session</h2>
+      <p class="text-muted">Enter the session code provided by your instructor.</p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="mb-4">
+            <label for="session_code" class="form-label fw-bold text-uppercase small text-muted">Session ID</label>
+            <input 
+              type="text" 
+              class="form-control form-control-lg text-center fw-bold letter-spacing-2" 
+              id="session_code" 
+              name="session_code" 
+              placeholder="e.g. A1B2C3D4" 
+              required 
+              autofocus
+              style="letter-spacing: 2px; font-size: 1.5rem;"
+            >
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg fw-bold">
+              Join Session
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a href="{{ url_for('student_home') }}" class="text-decoration-none text-muted">
+        View Past Sessions History
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

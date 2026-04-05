@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="card shadow-sm auth-card">
+      <div class="card-body">
+        <h3 class="card-title mb-3 text-center">Admin Login</h3>
+        <p class="text-muted text-center mb-4">
+          Log in to view engagement analytics for all students.
+        </p>
+        <form method="POST" action="{{ url_for('admin_login') }}">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-control"
+              id="username"
+              name="username"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Login as Admin</button>
+        </form>
+      </div>
+</div>
+{% endblock %}
+
+

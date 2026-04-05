@@ -1,0 +1,77 @@
+/* Clean, colorful responsive theme for Teacher Eye */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root{
+  --bg: #f6f8ff;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent-1: #7b61ff;
+  --accent-2: #ff6b6b;
+  --accent-3: #00d4ff;
+  --glass: rgba(255,255,255,0.7);
+  --shadow: 0 8px 24px rgba(11,15,30,0.06);
+  --radius: 12px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background:var(--bg); color:#0f1724; -webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none}
+
+.container{max-width:1100px;margin:0 auto;padding:0 1.25rem}
+
+/* Header */
+.site-header{background:linear-gradient(90deg,#1f2340 0%, #3a0ca3 100%); color:#fff;position:sticky;top:0;z-index:40;border-bottom:4px solid rgba(255,255,255,0.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 0}
+.brand{font-weight:700;font-size:1.25rem;color:#fff}
+.nav{display:flex;gap:0.75rem;align-items:center}
+.nav a{color:rgba(255,255,255,0.95);padding:0.45rem 0.65rem;border-radius:8px}
+.nav a:hover{background:rgba(255,255,255,0.04)}
+.nav .btn-outline{border:1.5px solid rgba(255,255,255,0.12);color:#fff;padding:0.45rem 0.9rem}
+
+/* Mobile nav toggle */
+.nav-toggle{display:none;background:transparent;border:0;cursor:pointer;padding:0.25rem}
+.nav-toggle span{display:block;height:2px;width:20px;background:#fff;margin:4px 0;border-radius:2px}
+
+/* Hero */
+.hero{
+  margin:2.25rem auto;
+  padding:2.25rem;
+  border-radius:var(--radius);
+  background: linear-gradient(180deg, rgba(123,97,255,0.08), rgba(0,212,255,0.03));
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+.hero .kicker{display:inline-block;padding:6px 12px;border-radius:999px;background:linear-gradient(90deg,#ffd6a5,#ffadad);color:#2b2d42;font-weight:600;margin-bottom:0.75rem}
+.hero h1{font-size:2.8rem;margin:0.3rem 0 0.5rem;color:#071133}
+.hero p.lead{color:var(--muted);margin:0 0 1.5rem;font-size:1.05rem}
+
+/* Buttons */
+.btn{display:inline-block;padding:0.75rem 1.4rem;border-radius:10px;font-weight:600;cursor:pointer;border:0;text-decoration:none}
+.btn-primary{background:linear-gradient(90deg,var(--accent-1),var(--accent-3));color:#fff;box-shadow:0 10px 30px rgba(59,40,130,0.14)}
+.btn-primary.small{padding:0.5rem 0.9rem;font-size:.9rem}
+.btn-outline{background:transparent;border:2px solid rgba(15,23,36,0.06);color:#071133}
+.btn:hover{transform:translateY(-2px);transition:all .14s ease}
+
+/* Cards, forms and panels */
+.card{background:var(--card);border-radius:12px;padding:1.2rem;box-shadow:var(--shadow);border:1px solid rgba(14,20,40,0.04)}
+.form-row{display:grid;grid-template-columns:1fr;gap:0.75rem}
+input[type="text"],input[type="password"],select,textarea{width:100%;padding:0.7rem;border-radius:8px;border:1px solid rgba(11,15,30,0.06);background:#fff}
+
+/* Footer */
+.site-footer{padding:1.25rem 0;margin-top:2.25rem;color:var(--muted);text-align:center}
+
+/* Small screens */
+@media (max-width:800px){
+  .nav{position:fixed;top:64px;right:0;background:linear-gradient(180deg,#fff,#fbfbff);flex-direction:column;padding:1rem;border-radius:12px;box-shadow:var(--shadow);transform:translateY(-10px);opacity:0;pointer-events:none;transition:0.18s ease;min-width:200px}
+  body.nav-open .nav{opacity:1;pointer-events:auto;transform:none}
+  .nav-toggle{display:block}
+  .header-inner{gap:0.5rem}
+  .hero h1{font-size:2rem}
+}
+
+/* Utility */
+.text-muted{color:var(--muted)}
+.center{display:flex;justify-content:center;align-items:center}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+@media (max-width:900px){.grid-3{grid-template-columns:1fr}}

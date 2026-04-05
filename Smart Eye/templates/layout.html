@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>{% block title %}Teacher Eye{% endblock %}</title>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+  <a class="brand" href="{{ url_for('home') }}">Teacher Eye</a>
+      <nav class="nav">
+        <a href="{{ url_for('student_login') }}">Student Login</a>
+        <a href="{{ url_for('admin_login') }}">Admin Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-outline small">Register</a>
+      </nav>
+      <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.body.classList.toggle('nav-open')">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      {% block content %}
+      <!-- page-specific content -->
+      {% endblock %}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Teacher Eye — AI-Powered Student Engagement Monitor</p>
+    </div>
+  </footer>
+
+  <script>
+    // small enhancement for mobile nav: close when clicking link
+    document.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => {
+      document.body.classList.remove('nav-open');
+    }));
+  </script>
+</body>
+</html>

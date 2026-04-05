@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-6">
+    <h2 class="mb-1 fw-bold">Welcome, {{ username }}!</h2>
+    <p class="text-muted mb-0">
+      Overview of class meets and engagement summaries.
+    </p>
+  </div>
+  <div class="col-md-6 mt-3 mt-md-0 d-flex justify-content-md-end justify-content-center">
+    <div class="admin-actions d-flex flex-wrap gap-2 p-1" aria-label="Admin actions">
+        <a href="{{ url_for('admin_teaching_sessions') }}" class="btn btn-soft-primary shadow-sm admin-actions__btn">
+          <span class="admin-actions__icon" aria-hidden="true">📅</span>
+          <span class="admin-actions__label">Manage Sessions</span>
+        </a>
+        <a href="{{ url_for('admin_sessions') }}" class="btn btn-soft-warning shadow-sm admin-actions__btn">
+          <span class="admin-actions__icon" aria-hidden="true">🗂️</span>
+          <span class="admin-actions__label">History</span>
+        </a>
+        <a href="{{ url_for('admin_analytics') }}" class="btn btn-primary shadow-sm admin-actions__btn admin-actions__btn--analytics">
+          <span class="admin-actions__icon" aria-hidden="true">📊</span>
+          <span class="admin-actions__label">View Analytics</span>
+        </a>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-soft-danger shadow-sm admin-actions__btn">
+          <span class="admin-actions__icon" aria-hidden="true">🚪</span>
+          <span class="admin-actions__label">Logout</span>
+        </a>
+    </div>
+  </div>
+</div>
+
+<!-- Date Filter Panel -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Filter by Date Range</h5>
+    <form method="GET" action="{{ url_for('admin_dashboard') }}" class="row g-3">
+      <!-- Quick Filters -->
+      <div class="col-md-6">
+        <label class="form-label small text-muted">Quick Filters</label>
+        <div class="btn-group w-100" role="group">
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="filter_all"
+            value="all"
+            {% if filter_type == 'all' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary shadow-sm" for="filter_all">All</label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="filter_today"
+            value="today"
+            {% if filter_type == 'today' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary shadow-sm" for="filter_today">Today</label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="filter_week"
+            value="week"
+            {% if filter_type == 'week' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary shadow-sm" for="filter_week">This Week</label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="filter_month"
+            value="month"
+            {% if filter_type == 'month' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary shadow-sm" for="filter_month">This Month</label>
+        </div>
+      </div>
+
+      <!-- Custom Date Range -->
+      <div class="col-md-3">
+        <label for="start_date" class="form-label small text-muted">Start Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="start_date"
+          name="start_date"
+          value="{{ start_date_str }}"
+        />
+      </div>
+      <div class="col-md-3">
+        <label for="end_date" class="form-label small text-muted">End Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="end_date"
+          name="end_date"
+          value="{{ end_date_str }}"
+        />
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-sm btn-primary shadow-sm">Apply Custom Range</button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-soft-secondary shadow-sm">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Meets Table -->
+{% if meets %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Class Meets</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Meet Title</th>
+            <th>Time Range</th>
+            <th>App / Context</th>
+            <th>Students</th>
+            <th>Avg Engagement</th>
+            <th>Total Duration</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for meet in meets %}
+          <tr>
+            <td>
+              <strong>{{ meet.title }}</strong>
+              <br>
+              <small class="text-muted">{{ meet.date|ist }}</small>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ meet.time_range|format_meet_time_range }}</span>
+            </td>
+            <td>
+              {{ meet.app }}
+            </td>
+            <td>
+              <span class="badge bg-info">{{ meet.student_count }}</span>
+            </td>
+            <td>
+              {% if meet.avg_engagement >= 80 %}
+                <span class="text-success fw-bold">{{ "%.1f"|format(meet.avg_engagement) }}%</span>
+              {% elif meet.avg_engagement >= 50 %}
+                <span class="text-warning fw-bold">{{ "%.1f"|format(meet.avg_engagement) }}%</span>
+              {% else %}
+                <span class="text-danger fw-bold">{{ "%.1f"|format(meet.avg_engagement) }}%</span>
+              {% endif %}
+              <div class="progress" style="height: 4px; width: 100px;">
+                <div
+                  class="progress-bar {% if meet.avg_engagement >= 80 %}bg-success{% elif meet.avg_engagement >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                  role="progressbar"
+                  style="width: {{ meet.avg_engagement }}%"
+                ></div>
+              </div>
+            </td>
+            <td>
+              {{ "%.1f"|format(meet.total_duration / 60) }} min
+            </td>
+            <td>
+              <a
+                href="{{ url_for('admin_meet_details', title=meet.title, time_range=meet.time_range) }}"
+                class="btn btn-sm btn-primary"
+              >
+                View Details
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  <strong>No meets found</strong> for the selected date range.
+</div>
+{% endif %}
+{% endblock %}

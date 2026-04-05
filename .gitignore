@@ -1,0 +1,27 @@
+# Virtual environments (machine-specific)
+.venv/
+.venv-*/
+**/venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local / secrets
+*.db
+*.part
+.env
+.env.*
+**/admin_passkey.txt
+**/users.json
+
+# MediaPipe model (downloaded on first run)
+**/models/face_landmarker.task
+
+# IDE / OS
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Session Analysis | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <h2 class="mb-1 fw-bold">Session Analysis</h2>
+    <p class="text-muted mb-0">
+      Detailed engagement report for your session.
+    </p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{{ url_for('student_home') }}" class="btn btn-outline-secondary">
+      ← Back to Home
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Session Details Card -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-light fw-bold">
+        Session Details
+      </div>
+      <div class="card-body">
+        <h5 class="card-title fw-bold mb-3">{{ session_obj.meet_title or 'Untitled Session' }}</h5>
+        
+        <div class="mb-3">
+          <label class="small text-muted text-uppercase fw-bold">Date</label>
+          <div class="fs-5">{{ session_obj.created_at.strftime('%d-%m-%Y') }}</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="small text-muted text-uppercase fw-bold">App</label>
+          <div><span class="badge bg-secondary">{{ session_obj.meet_app or 'Unknown' }}</span></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="small text-muted text-uppercase fw-bold">Time Range</label>
+          <div>{{ session_obj.meet_time_range|format_meet_time_range }}</div>
+        </div>
+
+        <div class="mb-0">
+          <label class="small text-muted text-uppercase fw-bold">Status</label>
+          <div>
+            {% if session_obj.logout_time %}
+              <span class="badge bg-success">Completed</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Incomplete</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Metrics -->
+  <div class="col-lg-8">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card border-primary h-100 bg-light">
+          <div class="card-body text-center">
+            <h6 class="text-primary text-uppercase small fw-bold mb-2">Total Duration</h6>
+            <h3 class="fw-bold mb-0">
+              {{ (stats.duration_seconds / 60)|round(1) }} <span class="fs-6 text-muted">min</span>
+            </h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-success h-100 bg-light">
+          <div class="card-body text-center">
+            <h6 class="text-success text-uppercase small fw-bold mb-2">Engaged Time</h6>
+            <h3 class="fw-bold mb-0">
+              {{ (stats.engaged_seconds / 60)|round(1) }} <span class="fs-6 text-muted">min</span>
+            </h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-danger h-100 bg-light">
+          <div class="card-body text-center">
+            <h6 class="text-danger text-uppercase small fw-bold mb-2">Disengaged Time</h6>
+            <h3 class="fw-bold mb-0">
+              {{ (stats.disengaged_seconds / 60)|round(1) }} <span class="fs-6 text-muted">min</span>
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Face Detection Rate -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm border-secondary h-100 bg-light">
+          <div class="card-body text-center">
+            <h6 class="text-secondary text-uppercase small fw-bold mb-2">Face Detection Rate</h6>
+            <h3 class="fw-bold mb-0">
+              {{ stats.face_detection_rate }} <span class="fs-6 text-muted">%</span>
+            </h3>
+            <p class="text-muted small mb-0">
+              Percentage of frames where a face was detected during your session.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Card -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-light fw-bold">
+        Engagement Breakdown
+      </div>
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <canvas id="engagementChart"></canvas>
+          </div>
+          <div class="col-md-6 mt-4 mt-md-0">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-success me-2">&nbsp;</span> Engaged</span>
+                <span class="fw-bold">{{ engaged_pct }}%</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-danger me-2">&nbsp;</span> Disengaged</span>
+                <span class="fw-bold">{{ disengaged_pct }}%</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-secondary me-2">&nbsp;</span> Disengagement Events</span>
+                <span class="fw-bold">{{ stats.disengage_events }} times</span>
+              </li>
+            </ul>
+            <p class="text-muted small mt-3">
+              * Disengagement events indicate how many times you looked away or were not detected.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  const ctx = document.getElementById('engagementChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Engaged', 'Disengaged'],
+      datasets: [{
+        data: [{{ stats.engaged_seconds }}, {{ stats.disengaged_seconds }}],
+        backgroundColor: [
+          'rgba(25, 135, 84, 0.8)',  // Success Green
+          'rgba(220, 53, 69, 0.8)'   // Danger Red
+        ],
+        borderColor: [
+          'rgba(25, 135, 84, 1)',
+          'rgba(220, 53, 69, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.raw;
+              const total = context.chart._metasets[context.datasetIndex].total;
+              const percentage = ((value / total) * 100).toFixed(1) + '%';
+              return context.label + ': ' + percentage + ' (' + Math.round(value/60) + ' min)';
+            }
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

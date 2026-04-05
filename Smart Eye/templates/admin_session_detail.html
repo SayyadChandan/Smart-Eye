@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Session Detail | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col-12 d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="mb-1 fw-bold">Session Detail</h2>
+      <p class="text-muted mb-0">
+        Student: <strong>{{ session_model.student.username }}</strong> | Session ID: {{ session_model.id }}
+      </p>
+    </div>
+    <div class="btn-group">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        ← Back to Dashboard
+      </a>
+      <button
+        type="button"
+        class="btn btn-outline-danger btn-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#deleteAllModal"
+      >
+        🗑️ Delete All for Student
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div class="modal fade" id="deleteAllModal" tabindex="-1" aria-labelledby="deleteAllModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteAllModalLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete <strong>ALL sessions</strong> for student
+          <strong>{{ session_model.student.username }}</strong>?
+        </p>
+        <p class="text-muted small">
+          This will permanently delete all sessions and all engagement events for this student.
+          This action cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form
+          method="POST"
+          action="{{ url_for('admin_delete_all_student_sessions', student_id=session_model.student_id) }}"
+          style="display: inline;"
+        >
+          <button type="submit" class="btn btn-danger">Delete All Sessions</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-title text-muted text-uppercase small">Timing</h6>
+  <p class="mb-1"><strong>Login:</strong> {{ session_model.login_time|ist }}</p>
+        <p class="mb-1">
+          <strong>Logout:</strong>
+          {% if session_model.logout_time %}
+            {{ session_model.logout_time|ist }}
+          {% else %}
+            <span class="badge bg-success">Active</span>
+          {% endif %}
+        </p>
+        <p class="mb-0">
+          <strong>Total Duration (approx):</strong>
+          {{ "%.1f"|format(stats.duration_seconds / 60.0) }} minutes
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-title text-muted text-uppercase small">Engagement Time</h6>
+        <p class="mb-1">
+          <strong>Engaged:</strong>
+          {{ "%.1f"|format(stats.engaged_seconds / 60.0) }} minutes
+        </p>
+        <p class="mb-0">
+          <strong>Disengaged:</strong>
+          {{ "%.1f"|format(stats.disengaged_seconds / 60.0) }} minutes
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-title text-muted text-uppercase small">Transitions</h6>
+        <p class="mb-1">
+          <strong>Engaged → Disengaged:</strong> {{ stats.engaged_to_disengaged }}
+        </p>
+        <p class="mb-0">
+          <strong>Disengaged → Engaged:</strong> {{ stats.disengaged_to_engaged }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Engagement Timeline (most recent first)</h5>
+    {% if session_model.events %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Timestamp (IST)</th>
+            <th>State</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in session_model.events|reverse %}
+          <tr>
+            <td>{{ event.timestamp|ist }}</td>
+            <td>
+              {% if event.engagement_state == 'engaged' %}
+              <span class="badge bg-success">Engaged</span>
+              {% else %}
+              <span class="badge bg-danger">Disengaged</span>
+              {% endif %}
+            </td>
+            <td>{{ "%.3f"|format(event.score) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No engagement events recorded for this session.</p>
+    {% endif %}
+  </div>
+{% endblock %}
+
+

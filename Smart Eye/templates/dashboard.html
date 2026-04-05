@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <h2 class="mb-1 fw-bold">Engagement Dashboard</h2>
+    <p class="text-muted mb-0">
+      Live overview of student attention based on webcam video, face detection, and simple
+      engagement scoring.
+    </p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <span class="badge bg-light text-dark border">
+      Logged in as <strong>{{ username }}</strong>
+    </span>
+  </div>
+</div>
+
+<div class="row g-4 align-items-stretch">
+  <!-- Left: Live video feed -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="card-title mb-0">Live Webcam Feed</h5>
+          <span class="badge bg-success-subtle text-success border border-success-subtle">
+            Live
+          </span>
+        </div>
+
+        <p class="card-subtitle mb-3 text-muted small">
+          Browser captures frames every second and sends them to the Flask backend, where
+          OpenCV detects faces and computes engagement scores.
+        </p>
+
+        <!-- Video element where webcam stream will be displayed -->
+        <div class="video-container mb-2 flex-grow-1">
+          <video
+            id="video"
+            autoplay
+            playsinline
+            class="w-100 h-100 rounded-3"
+          ></video>
+        </div>
+        <div id="video-status" class="small text-muted">
+          Initializing webcam...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Stats + student list -->
+  <div class="col-lg-6 d-flex flex-column gap-3">
+    <div class="row g-3">
+      <!-- Class engagement card -->
+      <div class="col-md-6">
+        <div class="card metric-card h-100">
+          <div class="card-body text-center">
+            <p class="text-muted text-uppercase small mb-1">Class Engagement</p>
+            <h1 id="engagement-percentage" class="display-5 mb-0 metric-value">0%</h1>
+            <p id="class-engagement-label" class="text-muted mb-2 small">Class Engagement: 0%</p>
+
+            <div class="progress" style="height: 10px; width: 90%; margin: 0 auto;">
+              <div
+                id="class-engagement-progress"
+                class="progress-bar"
+                role="progressbar"
+                style="width: 0%; background-color: #ef4444;"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total students card -->
+      <div class="col-md-6">
+        <div class="card metric-card h-100">
+          <div class="card-body text-center">
+            <p class="text-muted text-uppercase small mb-1">Students Detected</p>
+            <h1 id="total-students" class="display-5 mb-0 metric-value">0</h1>
+            <p class="text-muted mb-0 small">Faces in current frame</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student list -->
+    <div class="card flex-grow-1">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="card-title mb-0">Student‑wise Engagement</h5>
+          <span class="text-muted small">
+            Updated every second
+          </span>
+        </div>
+
+        <div id="students-list" class="mt-2 flex-grow-1">
+          <!-- Filled dynamically by realtime.js -->
+          <p class="text-muted mb-0">
+            Waiting for webcam frames...
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden canvas used only to capture frames from the video element.
+     It is not shown to the user but used by JavaScript to send images
+     to the backend. -->
+<canvas id="capture-canvas" style="display: none;"></canvas>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Custom JavaScript for real‑time detection logic -->
+<script src="{{ url_for('static', filename='js/realtime.js') }}"></script>
+{% endblock %}
+
+

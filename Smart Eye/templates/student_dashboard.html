@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <h2 class="mb-1 fw-bold">Your Engagement</h2>
+    {% if current_session %}
+    <p class="mb-1">
+      <span class="badge bg-primary">{{ current_session.teaching_session.session_code if current_session.teaching_session else 'MANUAL' }}</span>
+      <span class="fw-bold">{{ current_session.meet_title }}</span>
+    </p>
+    {% endif %}
+    <p class="text-muted mb-0">
+      Keep this tab open while attending class. The system uses your webcam to
+      estimate whether you appear engaged or disengaged over time.
+    </p>
+  </div>
+  <div class="col-md-4 d-flex justify-content-md-end justify-content-center mt-3 mt-md-0 gap-2">
+    <button type="button" class="btn btn-danger fw-bold" data-bs-toggle="modal" data-bs-target="#endSessionModal">
+      End Session
+    </button>
+  </div>
+</div>
+
+<!-- End Session Confirmation Modal -->
+<div class="modal fade" id="endSessionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">End Session?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to end this session? This will stop monitoring and save your engagement stats.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="endSession()">Yes, End Session</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 align-items-stretch" id="dashboard-content">
+  <!-- Left: Live video feed -->
+  <div class="col-lg-6" id="video-column">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title mb-2">Webcam Feed</h5>
+        <p class="card-subtitle mb-3 text-muted small">
+          Your browser captures frames every {{ 2 }} seconds and sends them to the
+          backend for analysis.
+        </p>
+
+        <div class="video-container mb-2 flex-grow-1">
+          <video
+            id="video"
+            autoplay
+            playsinline
+            class="w-100 rounded-3"
+            style="width: 100%; height: auto;"
+          ></video>
+        </div>
+        <div id="video-status" class="small text-muted">
+          Initializing webcam...
+        </div>
+
+        <button
+          type="button"
+          id="reset-baseline-btn"
+          class="btn btn-sm btn-warning fw-bold mt-2"
+        >
+          Reset Calibration
+        </button>
+
+        <div
+          id="lighting-warning-banner"
+          class="alert alert-warning text-center fw-bold mb-2 d-none"
+          role="alert"
+        >
+          ⚠️ Poor lighting detected — please improve lighting for accurate results
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Current engagement status -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+        <h5 class="card-title mb-3">Current Engagement Status</h5>
+        <div
+          id="face-warning-banner"
+          class="alert alert-danger text-center fw-bold mb-3 d-none face-warning-banner"
+          role="alert"
+        >
+          ⚠️ Face not detected — please adjust your camera
+        </div>
+        <div id="engagement-indicator" class="mb-3">
+          <span class="badge bg-secondary px-3 py-2">Waiting for frames...</span>
+        </div>
+
+        <!-- Baseline calibration progress -->
+        <div
+          id="calibration-progress-wrap"
+          class="w-100 mb-3 d-none"
+          aria-live="polite"
+        >
+          <div class="small text-warning fw-bold mb-2 text-center">
+            Calibrating... please look at your camera
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div
+              id="calibration-progress-bar"
+              class="progress-bar progress-bar-striped progress-bar-animated bg-warning"
+              role="progressbar"
+              style="width: 0%;"
+            ></div>
+          </div>
+        </div>
+        <div class="score-gauge-block mb-4 text-center">
+          <div class="text-muted small mb-2">Score</div>
+          <div
+            id="score-gauge"
+            class="score-gauge"
+            style="--pct: 0; --gauge-color: #9ca3af;"
+            aria-label="Engagement score gauge"
+          >
+            <div id="score-gauge-text" class="score-gauge-text">—</div>
+          </div>
+        </div>
+
+        <!-- Explainability: why not engaged -->
+        <div
+          id="why-not-engaged-card"
+          class="card border-danger bg-light w-100 d-none"
+        >
+          <div class="card-body p-3 text-start">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="text-danger fw-bold mb-0">Why am I Not Engaged?</h6>
+            </div>
+            <div id="why-not-engaged-reason" class="small text-muted mb-2">
+              -
+            </div>
+            <div id="why-not-engaged-signals" class="small text-muted">
+              -
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Session Stats -->
+        <div class="row w-100 mb-4">
+          <div class="col-6">
+            <div class="p-3 border rounded bg-light">
+              <h6 class="text-muted small text-uppercase mb-1">Engaged Time</h6>
+              <h3 class="mb-0 text-success fw-bold" id="engaged-time">0m</h3>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 border rounded bg-light">
+              <h6 class="text-muted small text-uppercase mb-1">Disengaged Time</h6>
+              <h3 class="mb-0 text-danger fw-bold" id="disengaged-time">0m</h3>
+            </div>
+          </div>
+        </div>
+
+        <p class="small text-muted mb-0">
+          This score is computed using MediaPipe Face Mesh landmarks (EAR for eye state
+          + head pose for looking away) with temporal smoothing. Raw video is not stored.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden canvas used only to capture frames from the video element. -->
+<canvas id="capture-canvas" style="display: none;"></canvas>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student_engagement.js') }}"></script>
+{% endblock %}
+
+

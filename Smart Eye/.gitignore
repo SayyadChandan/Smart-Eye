@@ -1,0 +1,19 @@
+__pycache__/
+.venv/
+.venv-*/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.pytest_cache/
+.mypy_cache/
+*.part
+
+# Downloaded MediaPipe bundle (~4MB); app fetches on first run
+models/face_landmarker.task
+
+# Secrets / local config
+admin_passkey.txt
+users.json
+.env
+.env.*

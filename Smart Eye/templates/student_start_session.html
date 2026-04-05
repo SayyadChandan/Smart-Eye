@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Start Session | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 640px;">
+  <div class="card shadow-sm auth-card">
+      <div class="card-body">
+        <h3 class="card-title mb-2 text-center">Start Session / Join Class</h3>
+        <p class="text-muted text-center mb-4">
+          Tell us which meet/class you're joining. This will be saved with your session history.
+        </p>
+
+        <form method="POST" action="{{ url_for('student_start_session') }}">
+          <div class="mb-3">
+            <label for="meet_app" class="form-label">Meet App</label>
+            <select class="form-select" id="meet_app" name="meet_app" required>
+              <option value="" selected disabled>Select…</option>
+              <option value="Zoom">Zoom</option>
+              <option value="Teams">Teams</option>
+              <option value="Google Meet">Google Meet</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="meet_title" class="form-label">Meet Title</label>
+            <input
+              type="text"
+              class="form-control"
+              id="meet_title"
+              name="meet_title"
+              placeholder="e.g., Java Unit 3, ML Lab"
+              required
+            />
+          </div>
+
+          <div class="row g-2 mb-4">
+            <div class="col-12">
+              <label for="class_date" class="form-label">Date</label>
+              <input type="date" class="form-control" id="class_date" name="class_date" required />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">From</label>
+              <div class="input-group">
+                <select class="form-select px-2" name="start_hour" required>
+                  <option value="" selected disabled>Hr</option>
+                  {% for i in range(1, 13) %}<option value="{{ '%02d'|format(i) }}">{{ i }}</option>{% endfor %}
+                </select>
+                <span class="input-group-text px-2">:</span>
+                <select class="form-select px-2" name="start_min" required>
+                  <option value="" selected disabled>Min</option>
+                  {% for i in range(0, 60, 5) %}<option value="{{ '%02d'|format(i) }}">{{ '%02d'|format(i) }}</option>{% endfor %}
+                </select>
+                <select class="form-select px-2" name="start_ampm" required>
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">To</label>
+              <div class="input-group">
+                <select class="form-select px-2" name="end_hour" required>
+                  <option value="" selected disabled>Hr</option>
+                  {% for i in range(1, 13) %}<option value="{{ '%02d'|format(i) }}">{{ i }}</option>{% endfor %}
+                </select>
+                <span class="input-group-text px-2">:</span>
+                <select class="form-select px-2" name="end_min" required>
+                  <option value="" selected disabled>Min</option>
+                  {% for i in range(0, 60, 5) %}<option value="{{ '%02d'|format(i) }}">{{ '%02d'|format(i) }}</option>{% endfor %}
+                </select>
+                <select class="form-select px-2" name="end_ampm" required>
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-text col-12">Select class date and time range.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+            Start Session
+          </button>
+
+          <div class="text-center mt-3">
+            <a href="{{ url_for('student_logout') }}" class="text-muted small">Cancel & logout</a>
+          </div>
+        </form>
+      </div>
+</div>
+
+<script>
+  // Set default date to today
+  document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('class_date');
+    if (dateInput) {
+      dateInput.valueAsDate = new Date();
+    }
+  });
+</script>
+{% endblock %}

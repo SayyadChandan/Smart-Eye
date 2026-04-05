@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <h2 class="mb-1 fw-bold">📊 Engagement Analytics</h2>
+    <p class="text-muted mb-0">
+      Visual insights into student engagement patterns and trends.
+    </p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-soft-secondary shadow-sm">
+      ← Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Date Filter Panel (same as dashboard) -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Filter by Date Range</h5>
+    <form method="GET" action="{{ url_for('admin_analytics') }}" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label small text-muted">Quick Filters</label>
+        <div class="btn-group w-100" role="group">
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="analytics_filter_all"
+            value="all"
+            {% if filter_type == 'all' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary" for="analytics_filter_all">All</label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="analytics_filter_today"
+            value="today"
+            {% if filter_type == 'today' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary" for="analytics_filter_today">Today</label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="analytics_filter_week"
+            value="week"
+            {% if filter_type == 'week' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary" for="analytics_filter_week">This Week</label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="analytics_filter_month"
+            value="month"
+            {% if filter_type == 'month' %}checked{% endif %}
+            onchange="this.form.submit()"
+          />
+          <label class="btn btn-outline-primary" for="analytics_filter_month">This Month</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label for="analytics_start_date" class="form-label small text-muted">Start Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="analytics_start_date"
+          name="start_date"
+          value="{{ start_date_str }}"
+        />
+      </div>
+      <div class="col-md-3">
+        <label for="analytics_end_date" class="form-label small text-muted">End Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="analytics_end_date"
+          name="end_date"
+          value="{{ end_date_str }}"
+        />
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-sm btn-primary">Apply Custom Range</button>
+        <a href="{{ url_for('admin_analytics') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Chart 1: Daily Summary -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-3">📅 Daily Student Activity</h5>
+        <p class="text-muted small mb-3">
+          Number of unique students who logged in each day (based on session login_time).
+        </p>
+        <canvas id="dailyChart" height="80"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart 2: Engagement vs Disengagement -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-3">⏱️ Total Time Distribution</h5>
+        <p class="text-muted small mb-3">
+          Total engaged vs disengaged time across all sessions (in hours).
+        </p>
+        <canvas id="engagementPieChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-3">📊 Engagement Stacked View</h5>
+        <p class="text-muted small mb-3">
+          Same data shown as stacked bars for comparison.
+        </p>
+        <canvas id="engagementBarChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart 3: Student Engagement Distribution -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-3">👥 Student Engagement Distribution</h5>
+        <p class="text-muted small mb-3">
+          Engagement percentage for each student's most recent session.
+        </p>
+        <canvas id="studentChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+  // Chart 1: Daily Summary Bar Chart
+  const dailyCtx = document.getElementById("dailyChart").getContext("2d");
+  new Chart(dailyCtx, {
+    type: "bar",
+    data: {
+      labels: {{ daily_labels | tojson }},
+      datasets: [
+        {
+          label: "Unique Students",
+          data: {{ daily_counts | tojson }},
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        title: {
+          display: false,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+          },
+        },
+      },
+    },
+  });
+
+  // Chart 2: Engagement Pie Chart
+  const pieCtx = document.getElementById("engagementPieChart").getContext("2d");
+  new Chart(pieCtx, {
+    type: "pie",
+    data: {
+      labels: {{ engagement_labels | tojson }},
+      datasets: [
+        {
+          data: {{ engagement_data | tojson }},
+          backgroundColor: ["rgba(40, 167, 69, 0.8)", "rgba(220, 53, 69, 0.8)"],
+          borderColor: ["rgba(40, 167, 69, 1)", "rgba(220, 53, 69, 1)"],
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return context.label + ": " + context.parsed + " hours";
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Chart 2b: Engagement Stacked Bar Chart
+  const barCtx = document.getElementById("engagementBarChart").getContext("2d");
+  new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: ["Total Time"],
+      datasets: [
+        {
+          label: "Engaged (hours)",
+          data: [{{ engagement_data[0] }}],
+          backgroundColor: "rgba(40, 167, 69, 0.8)",
+          borderColor: "rgba(40, 167, 69, 1)",
+          borderWidth: 1,
+        },
+        {
+          label: "Disengaged (hours)",
+          data: [{{ engagement_data[1] }}],
+          backgroundColor: "rgba(220, 53, 69, 0.8)",
+          borderColor: "rgba(220, 53, 69, 1)",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        x: {
+          stacked: true,
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+        },
+      },
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+      },
+    },
+  });
+
+  // Chart 3: Student Engagement Distribution
+  const studentCtx = document.getElementById("studentChart").getContext("2d");
+  
+  // Color coding: green >= 80%, yellow 50-80%, red < 50%
+  const studentColors = {{ student_engagement_pcts | tojson }}.map((pct) => {
+    if (pct >= 80) return "rgba(40, 167, 69, 0.8)";
+    if (pct >= 50) return "rgba(255, 193, 7, 0.8)";
+    return "rgba(220, 53, 69, 0.8)";
+  });
+
+  new Chart(studentCtx, {
+    type: "bar",
+    data: {
+      labels: {{ student_names | tojson }},
+      datasets: [
+        {
+          label: "Engagement %",
+          data: {{ student_engagement_pcts | tojson }},
+          backgroundColor: studentColors,
+          borderColor: studentColors.map((c) => c.replace("0.8", "1")),
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y", // Horizontal bar chart
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return "Engagement: " + context.parsed.x + "%";
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            callback: function (value) {
+              return value + "%";
+            },
+          },
+        },
+      },
+    },
+  });
+</script>
+{% endblock %}
+

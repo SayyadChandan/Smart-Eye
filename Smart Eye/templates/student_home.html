@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Student Home | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col-md-8">
+    <h2 class="mb-1 fw-bold">Welcome, {{ username }}!</h2>
+    <p class="text-muted mb-0">
+      Ready to join a class? Click the button below to start a new session.
+    </p>
+  </div>
+  <div class="col-md-4 d-flex justify-content-md-end justify-content-center mt-3 mt-md-0">
+    <a href="{{ url_for('student_logout') }}" class="btn btn-outline-danger">
+      Logout
+    </a>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div class="col-12">
+    <div class="card shadow-sm border-0 bg-light">
+      <div class="card-body p-4 d-flex align-items-center justify-content-between">
+        <div>
+          <h4 class="fw-bold mb-1 text-primary">Join a Class</h4>
+          <p class="mb-0 text-muted">Start monitoring your engagement for a new meeting.</p>
+        </div>
+        <a href="{{ url_for('student_join_session') }}" class="btn btn-primary shadow-sm fw-bold px-4 py-2">
+          <i class="bi bi-camera-video-fill me-2"></i>Join Session
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <h4 class="fw-bold mb-3">Your Recent Sessions</h4>
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">Date</th>
+                <th>Class / Title</th>
+                <th>App</th>
+                <th>Time Range</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if sessions %}
+                {% for sess in sessions %}
+                <tr>
+                  <td class="ps-4">{{ sess.created_at.strftime('%d-%m-%Y') }}</td>
+                  <td class="fw-bold">{{ sess.meet_title or '-' }}</td>
+                  <td><span class="badge bg-secondary">{{ sess.meet_app or 'Unknown' }}</span></td>
+                  <td>{{ sess.meet_time_range|format_meet_time_range }}</td>
+                  <td>
+                    {% if sess.logout_time %}
+                      <span class="badge bg-success">Completed</span>
+                    {% else %}
+                      <span class="badge bg-warning text-dark">Incomplete</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ url_for('student_session_detail', session_id=sess.id) }}" class="btn btn-sm btn-outline-danger">
+                      View Analysis
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">
+                    No sessions found. Join a class to get started!
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

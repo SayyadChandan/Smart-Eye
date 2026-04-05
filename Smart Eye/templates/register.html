@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Register | Teacher Eye{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="card shadow-sm auth-card">
+      <div class="card-body">
+        <h3 class="card-title mb-3 text-center">Create Account</h3>
+        <p class="text-muted text-center mb-4">
+          Register as a <strong>student</strong> or <strong>admin</strong> user.
+        </p>
+        <form method="POST" action="{{ url_for('register') }}">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-control"
+              id="username"
+              name="username"
+              placeholder="Enter a unique username"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" id="role" name="role">
+              <option value="student" selected>Student</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="mb-3" id="admin-passkey-wrap" style="display: none;">
+            <label for="admin_passkey" class="form-label">Admin Passkey</label>
+            <input
+              type="password"
+              class="form-control"
+              id="admin_passkey"
+              name="admin_passkey"
+              placeholder="Enter admin passkey"
+              autocomplete="off"
+            />
+            <div class="form-text">
+              Only admins with the passkey can register as admin.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              placeholder="Create a password"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirm Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="confirm_password"
+              name="confirm_password"
+              placeholder="Re‑enter your password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+
+        <script>
+          (function () {
+            const role = document.getElementById('role');
+            const wrap = document.getElementById('admin-passkey-wrap');
+            const input = document.getElementById('admin_passkey');
+
+            function sync() {
+              const isAdmin = role.value === 'admin';
+              wrap.style.display = isAdmin ? 'block' : 'none';
+              // Only require when admin is selected
+              input.required = isAdmin;
+              if (!isAdmin) input.value = '';
+            }
+
+            role.addEventListener('change', sync);
+            sync();
+          })();
+        </script>
+        <p class="mt-3 text-center mb-0">
+          Already have an account?
+          <a href="{{ url_for('student_login') }}">Login as Student</a> or
+          <a href="{{ url_for('admin_login') }}">Admin Login</a>.
+        </p>
+      </div>
+</div>
+{% endblock %}
+
+
